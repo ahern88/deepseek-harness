@@ -1,0 +1,48 @@
+# electron-builder configuration for the ZHarness macOS app.
+# Run through `pnpm --filter @deepseek-ai/dsh-desktop run dist:mac` on a Mac
+# whose architecture matches the target: the staged dsh runtime carries
+# platform-specific native packages (node-pty, sharp, koffi) for the host.
+appId: com.zharness.desktop
+productName: ZHarness
+executableName: zharness
+copyright: Copyright © 2026 zharness
+directories:
+  output: dist
+  buildResources: build
+files:
+  - lib/**
+  - assets/**
+  - package.json
+  - "!**/*.map"
+extraResources:
+  - from: .stage/node/${arch}
+    to: node
+# electron-builder never copies node_modules through extraResources, so the
+# staged dsh runtime (.stage/dsh-runtime) is copied by this hook instead.
+afterPack: scripts/after-pack.cjs
+npmRebuild: false
+asar: true
+mac:
+  category: public.app-category.developer-tools
+  icon: build/icon.png
+  target:
+    - dmg
+    - zip
+  # Internal distribution: unsigned by default. Set CSC_LINK / CSC_NAME to sign.
+  identity: null
+  hardenedRuntime: false
+  gatekeeperAssess: false
+  extendInfo:
+    NSDesktopFolderUsageDescription: ZHarness 需要访问你选择的工作区文件夹。
+    NSDocumentsFolderUsageDescription: ZHarness 需要访问你选择的工作区文件夹。
+    NSDownloadsFolderUsageDescription: ZHarness 需要访问你选择的工作区文件夹。
+    NSAppleEventsUsageDescription: ZHarness 使用系统对话框选择工作区目录。
+dmg:
+  title: ZHarness ${version}
+  contents:
+    - x: 140
+      y: 200
+    - x: 400
+      y: 200
+      type: link
+      path: /Applications

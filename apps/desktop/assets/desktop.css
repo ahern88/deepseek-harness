@@ -1,0 +1,365 @@
+/*
+ * ZHarness desktop skin over the dsh Web UI.
+ *
+ * Injected by the Electron main process after each page load (author origin),
+ * and scoped to `html.zh-desktop`, which the preload script sets. Layout: a
+ * translucent sidebar on the window background with the conversation as an
+ * inset rounded card; a blue-violet accent; a greeting and quick-start task
+ * cards on the empty home screen.
+ *
+ * The Web UI applies theme tokens as inline styles on <body>, so token
+ * overrides use !important. Class selectors match the readable suffix of the
+ * Web UI's CSS-module class names (`[class*="_newSession"]`).
+ */
+
+html.zh-desktop {
+  --zh-accent: #4f6bff;
+  --zh-accent-2: #8b5cf6;
+  --zh-accent-gradient: linear-gradient(135deg, #4f7cff 0%, #7c5cff 100%);
+  --zh-accent-soft: rgba(79, 107, 255, 0.1);
+  --zh-accent-soft-strong: rgba(79, 107, 255, 0.16);
+  --zh-window-bg: #eef0f5;
+  --zh-card-bg: #ffffff;
+  --zh-card-border: rgba(20, 30, 60, 0.07);
+  --zh-card-shadow: 0 1px 2px rgba(20, 30, 60, 0.04), 0 8px 24px rgba(20, 30, 60, 0.06);
+  --zh-sidebar-item-hover: rgba(20, 30, 60, 0.05);
+  --zh-sidebar-item-active: rgba(255, 255, 255, 0.9);
+  --zh-radius-card: 14px;
+  --zh-inset: 8px;
+  --zh-titlebar: 52px;
+}
+
+html.zh-desktop body[data-ds-dark-theme] {
+  --zh-accent: #7b8cff;
+  --zh-accent-soft: rgba(123, 140, 255, 0.14);
+  --zh-accent-soft-strong: rgba(123, 140, 255, 0.22);
+  --zh-window-bg: #15161a;
+  --zh-card-bg: #1d1e23;
+  --zh-card-border: rgba(255, 255, 255, 0.06);
+  --zh-card-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.25);
+  --zh-sidebar-item-hover: rgba(255, 255, 255, 0.06);
+  --zh-sidebar-item-active: rgba(255, 255, 255, 0.1);
+}
+
+/* ── tokens ─────────────────────────────────────────────────────────────── */
+
+html.zh-desktop body {
+  --dsw-alias-button-primary-fill: var(--zh-accent) !important;
+  --dsw-alias-button-primary-hover: #3f58e8 !important;
+  --dsw-alias-brand-primary-new-colorprimary-new-color: var(--zh-accent) !important;
+  --dsw-alias-label-primary-bluish: var(--zh-accent) !important;
+  --dsw-alias-bg-multi-select: var(--zh-accent-soft) !important;
+  --dsw-alias-interactive-bg-hover-accent: var(--zh-accent-soft-strong) !important;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+html.zh-desktop body[data-ds-dark-theme] {
+  --dsw-alias-button-primary-hover: #95a3ff !important;
+}
+
+/* ── window frame: sidebar on the window background, content as a card ── */
+
+html.zh-desktop,
+html.zh-desktop body {
+  background: var(--zh-window-bg) !important;
+}
+
+/* macOS: let the window's sidebar vibrancy show through. */
+html.zh-desktop.zh-darwin,
+html.zh-desktop.zh-darwin body {
+  background: transparent !important;
+}
+
+html.zh-desktop.zh-darwin [class*="_centerCol"],
+html.zh-desktop.zh-darwin [class*="_detailsCol"] {
+  background-clip: padding-box;
+}
+
+html.zh-desktop [class*="_frame"] {
+  background: transparent !important;
+}
+
+html.zh-desktop [class*="_sidebarCol"],
+html.zh-desktop [class*="_sidebarCol"] [data-slot="sidebar"] > div {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+html.zh-desktop.zh-darwin [class*="_sidebarCol"] [data-slot="sidebar"] > div {
+  background: color-mix(in srgb, var(--zh-window-bg) 55%, transparent) !important;
+}
+
+html.zh-desktop [class*="_centerCol"] {
+  margin: var(--zh-inset) var(--zh-inset) var(--zh-inset) 0;
+  border-radius: var(--zh-radius-card);
+  background: var(--zh-card-bg) !important;
+  box-shadow: var(--zh-card-shadow), 0 0 0 1px var(--zh-card-border);
+  overflow: hidden;
+  min-height: 0;
+}
+
+html.zh-desktop [class*="_detailsCol"]:not(:empty) {
+  margin: var(--zh-inset) var(--zh-inset) var(--zh-inset) 0;
+  border-radius: var(--zh-radius-card);
+  background: var(--zh-card-bg) !important;
+  box-shadow: var(--zh-card-shadow), 0 0 0 1px var(--zh-card-border);
+  overflow: hidden;
+}
+
+html.zh-desktop [class*="_detailsCol"] > [data-slot="details"]:empty {
+  display: none;
+}
+
+/* Thin draggable strip above the content card (the card is inset by --zh-inset). */
+html.zh-desktop .zh-titlebar-drag {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: var(--zh-inset);
+  z-index: 2147483000;
+  -webkit-app-region: drag;
+}
+
+/* ── sidebar ────────────────────────────────────────────────────────────── */
+
+html.zh-desktop [class*="_logoRow"] {
+  min-height: var(--zh-titlebar);
+  padding-top: 6px;
+  -webkit-app-region: drag;
+}
+
+html.zh-desktop.zh-darwin [class*="_logoRow"] {
+  padding-left: 76px;
+}
+
+html.zh-desktop [class*="_logoRow"] button {
+  -webkit-app-region: no-drag;
+}
+
+/* Product wordmark in place of the upstream logo. */
+html.zh-desktop [class*="_logoRow"] [class*="_brand"] svg {
+  display: none;
+}
+
+html.zh-desktop [class*="_logoRow"] [class*="_brand"]::after {
+  content: "ZHarness";
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.2px;
+  background: var(--zh-accent-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  white-space: nowrap;
+}
+
+html.zh-desktop [class*="_newSession"] {
+  background: var(--zh-accent-gradient) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 10px !important;
+  font-weight: 550;
+  box-shadow: 0 4px 12px rgba(79, 107, 255, 0.28);
+  transition: filter 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+html.zh-desktop [class*="_newSession"]:hover {
+  filter: brightness(1.06);
+  box-shadow: 0 6px 16px rgba(79, 107, 255, 0.36);
+}
+
+html.zh-desktop [class*="_newSession"]:active {
+  transform: translateY(1px);
+}
+
+html.zh-desktop [class*="_newSession"] svg {
+  color: #fff !important;
+}
+
+html.zh-desktop [class*="_sectionLabel"] {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+html.zh-desktop [class*="_sidebarCol"] [role="treeitem"] > :first-child,
+html.zh-desktop [class*="_sidebarCol"] [role="treeitem"] {
+  border-radius: 8px;
+}
+
+html.zh-desktop [class*="_sidebarCol"] [aria-selected="true"],
+html.zh-desktop [class*="_sidebarCol"] [aria-current="true"],
+html.zh-desktop [class*="_sidebarCol"] [data-active="true"] {
+  background: var(--zh-sidebar-item-active) !important;
+  box-shadow: 0 1px 2px rgba(20, 30, 60, 0.06);
+}
+
+/* ── home screen ────────────────────────────────────────────────────────── */
+
+html.zh-desktop [data-phase="hero"] [class*="_headline"] {
+  gap: 0;
+}
+
+html.zh-desktop [data-phase="hero"] [class*="_fishHitbox"],
+html.zh-desktop [data-phase="hero"] [class*="_previewBadge"] {
+  display: none !important;
+}
+
+html.zh-desktop [data-phase="hero"] [class*="_headlineText"] {
+  font-size: 0 !important;
+}
+
+html.zh-desktop [data-phase="hero"] [class*="_headlineText"]::after {
+  content: var(--zh-greeting, "今天想完成什么任务？");
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  background: linear-gradient(135deg, var(--dsw-alias-label-primary, #1d2129) 30%, var(--zh-accent) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Hide the upstream decorative halo behind the hero composer. */
+html.zh-desktop [data-phase="hero"] [class*="_composerHero"] > svg:first-child {
+  display: none;
+}
+
+html.zh-desktop [data-phase="hero"] [class*="_scrollBody"] {
+  background:
+    radial-gradient(60% 45% at 50% 30%, var(--zh-accent-soft) 0%, transparent 70%),
+    radial-gradient(40% 35% at 75% 60%, rgba(139, 92, 246, 0.07) 0%, transparent 70%);
+}
+
+/* ── composer ───────────────────────────────────────────────────────────── */
+
+html.zh-desktop [data-composer-card="true"] {
+  border-radius: 18px !important;
+  box-shadow: 0 2px 6px rgba(20, 30, 60, 0.04), 0 12px 32px rgba(20, 30, 60, 0.08) !important;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+html.zh-desktop [data-composer-card="true"]:focus-within {
+  border-color: color-mix(in srgb, var(--zh-accent) 55%, transparent) !important;
+  box-shadow: 0 0 0 4px var(--zh-accent-soft), 0 12px 32px rgba(20, 30, 60, 0.08) !important;
+}
+
+html.zh-desktop body[data-ds-dark-theme] [data-composer-card="true"] {
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35) !important;
+}
+
+html.zh-desktop [data-slot="conversation.composer.bar"] button[class*="_primary"]:not(:disabled) {
+  background: var(--zh-accent-gradient) !important;
+  color: #fff !important;
+}
+
+/* ── quick-start cards (added by the preload script) ───────────────────── */
+
+html.zh-desktop .zh-quickstart {
+  width: 100%;
+  margin-top: 28px;
+  animation: zh-fade-in 0.35s ease both;
+}
+
+html.zh-desktop .zh-quickstart-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dsw-alias-label-tertiary, #8a919f);
+  margin: 0 4px 10px;
+}
+
+html.zh-desktop .zh-quickstart-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+@media (max-width: 1100px) {
+  html.zh-desktop .zh-quickstart-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+html.zh-desktop .zh-quickstart-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--dsw-alias-border-l1, rgba(20, 30, 60, 0.08));
+  background: color-mix(in srgb, var(--zh-card-bg) 80%, transparent);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease, background 0.15s ease;
+}
+
+html.zh-desktop .zh-quickstart-card:hover {
+  border-color: color-mix(in srgb, var(--zh-accent) 45%, transparent);
+  background: var(--zh-card-bg);
+  box-shadow: 0 6px 18px rgba(79, 107, 255, 0.12);
+  transform: translateY(-1px);
+}
+
+html.zh-desktop .zh-quickstart-icon {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-size: 17px;
+  background: var(--zh-accent-soft);
+}
+
+html.zh-desktop .zh-quickstart-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+html.zh-desktop .zh-quickstart-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--dsw-alias-label-primary, #1d2129);
+}
+
+html.zh-desktop .zh-quickstart-hint {
+  font-size: 12px;
+  color: var(--dsw-alias-label-tertiary, #8a919f);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@keyframes zh-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ── dialogs and menus ──────────────────────────────────────────────────── */
+
+html.zh-desktop [role="dialog"] {
+  border-radius: 16px;
+}
+
+/* The session list's bottom fade is painted for an opaque sidebar; drop it. */
+html.zh-desktop [class*="_sidebarCol"] [class*="_fade"] {
+  display: none !important;
+}
+
+/* "New session" reads as "new task" in the desktop app. */
+html.zh-desktop [class*="_newSessionLabel"] {
+  font-size: 0 !important;
+}
+
+html.zh-desktop [class*="_newSessionLabel"]::after {
+  content: "新建任务";
+  font-size: 14px;
+}
+
+html.zh-desktop [data-phase]:not([data-phase="hero"]) .zh-quickstart {
+  display: none !important;
+}

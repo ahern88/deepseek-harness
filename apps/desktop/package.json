@@ -1,0 +1,32 @@
+{
+  "name": "@deepseek-ai/dsh-desktop",
+  "productName": "ZHarness",
+  "description": "macOS desktop app over the dsh Web UI: an Electron shell that supervises a local `dsh web` server and restyles it as a desktop workbench",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "lib/main.js",
+  "license": "MIT",
+  "author": "zharness",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "npm run build && electron .",
+    "dev": "npm run build && DSH_DESKTOP_DEVTOOLS=1 electron .",
+    "stage": "node scripts/stage-runtime.mjs && node scripts/fetch-node.mjs",
+    "dist:mac": "npm run build && npm run stage && electron-builder --mac --arm64 --config electron-builder.yml",
+    "dist:mac:dir": "npm run build && npm run stage && electron-builder --mac dir --arm64 --config electron-builder.yml",
+    "dist:mac:x64": "npm run build && node scripts/stage-runtime.mjs && node scripts/fetch-node.mjs --arch x64 && electron-builder --mac --x64 --config electron-builder.yml"
+  },
+  "devDependencies": {
+    "@deepseek-ai/dsh": "workspace:^",
+    "@types/node": "^22.0.0",
+    "electron": "45.5.0",
+    "electron-builder": "^26.0.12",
+    "typescript": "^6.0.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ahern88/deepseek-harness.git",
+    "directory": "apps/desktop"
+  }
+}
