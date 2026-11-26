@@ -111,6 +111,39 @@ function workspaceSource(name, fromDir) {
   return undefined
 }
 
+/** True when `path` exists as a link or entry, even if it is a dangling link. */
+function present(path) {
+  try {
+    lstatSync(path)
+    return true
+  } catch {
+    // ENOENT: nothing at this path.
+    return false
+  }
+}
+
+/**
+ * Remove links whose target is gone. `pnpm deploy` can leave `link:` overrides
+ * (the vendored cosmokit and schemastery) as links relative to the workspace,
+ * which dangle inside the deploy directory and would hide the package from the
+ * closure walk below.
+ */
+function removeDanglingLinks(dir) {
+  for (const entry of readdirSync(dir)) {
+    const full = join(dir, entry)
+    const stat = lstatSync(full)
+    if (stat.isSymbolicLink()) {
+      if (!existsSync(full)) {
+        console.log(`stage-runtime: removing dangling link ${full}`)
+        rmSync(full, { force: true })
+      }
+    } else if (stat.isDirectory()) {
+      removeDanglingLinks(full)
+    }
+  }
+}
+removeDanglingLinks(stagedModules)
+
 /** Where each staged package came from, so its own deps resolve from the right place. */
 const origin = new Map()
 const queue = packageDirs(stagedModules)
@@ -137,6 +170,7 @@ while (queue.length > 0) {
       continue
     }
     const sourceNodeModules = join(source, 'node_modules')
+    if (present(destination)) rmSync(destination, { recursive: true, force: true })
     cpSync(source, destination, {
       recursive: true,
       dereference: true,
@@ -178,4 +212,71 @@ console.log(`stage-runtime: copied ${copied.length} packages omitted by pnpm dep
 if (unresolved.size > 0) {
   throw new Error(`stage-runtime: unresolved dependencies:\n  ${[...unresolved].join('\n  ')}`)
 }
+
+/**
+ * Resolve every non-optional dependency and peer of every staged package the
+ * way Node does (walking up node_modules), so a gap fails here instead of at
+ * app start-up.
+ */
+function verifyClosure() {
+  const missing = []
+  const dirs = [...packageDirs(stagedModules)]
+  for (const dir of [...dirs]) dirs.push(...packageDirs(join(dir, 'node_modules')))
+  for (const dir of dirs) {
+    const pkg = manifest(dir)
+    const required = { ...pkg.dependencies, ...pkg.peerDependencies }
+    for (const name of Object.keys(required)) {
+      if (pkg.peerDependenciesMeta?.[name]?.optional === true && !(name in (pkg.dependencies ?? {}))) continue
+      let base = dir
+      let found = false
+      while (base.startsWith(outDir)) {
+        if (existsSync(join(base, 'node_modules', ...name.split('/'), 'package.json'))) {
+          found = true
+          break
+        }
+        base = dirname(base)
+      }
+      if (!found) missing.push(`${name} (wanted by ${pkg.name})`)
+    }
+  }
+  if (missing.length > 0) {
+    throw new Error(`stage-runtime: staged runtime cannot resolve:\n  ${[...new Set(missing)].join('\n  ')}`)
+  }
+}
+verifyClosure()
+
+/** Boot `dsh web` from the staged runtime and wait for its ready line. */
+async function smokeBoot() {
+  const { spawn } = await import('node:child_process')
+  const { mkdtempSync } = await import('node:fs')
+  const { tmpdir } = await import('node:os')
+  const home = mkdtempSync(join(tmpdir(), 'zharness-stage-'))
+  const child = spawn(process.execPath, [join(outDir, 'lib', 'bin.js'), 'web', '--host', '127.0.0.1', '--port', '0'], {
+    cwd: home,
+    env: { ...process.env, DSH_HOME: home, NODE_ENV: '' },
+    stdio: ['ignore', 'pipe', 'pipe'],
+  })
+  let output = ''
+  child.stdout.on('data', chunk => { output += chunk })
+  child.stderr.on('data', chunk => { output += chunk })
+  const ok = await new Promise(resolve => {
+    const timer = setTimeout(() => resolve(false), 90_000)
+    child.stdout.on('data', () => {
+      if (/dsh web: https?:\/\//.test(output)) {
+        clearTimeout(timer)
+        resolve(true)
+      }
+    })
+    child.on('exit', () => {
+      clearTimeout(timer)
+      resolve(false)
+    })
+  })
+  child.kill('SIGTERM')
+  rmSync(home, { recursive: true, force: true })
+  if (!ok) throw new Error(`stage-runtime: smoke boot of the staged runtime failed:\n${output.slice(-4000)}`)
+  console.log('stage-runtime: smoke boot ok')
+}
+if (!process.argv.includes('--skip-smoke')) await smokeBoot()
+
 console.log(`stage-runtime: runtime staged at ${outDir}`)
