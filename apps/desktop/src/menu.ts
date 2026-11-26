@@ -94,7 +94,7 @@ export function buildMenu(run: (action: MenuAction) => void): Menu {
       submenu: [
         { label: '重启本地服务', click: () => run('restart-server') },
         { label: '打开日志目录', click: () => run('open-logs') },
-        { label: '打开 dsh 数据目录', click: () => run('open-dsh-home') },
+        { label: '打开数据目录（~/.zharness）', click: () => run('open-dsh-home') },
         { type: 'separator' },
         { label: 'DeepSeek Harness 文档', click: () => void shell.openExternal('https://github.com/deepseek-ai/deepseek-harness') },
       ],

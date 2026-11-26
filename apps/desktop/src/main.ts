@@ -13,7 +13,7 @@ import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { buildMenu, type MenuAction } from './menu.ts'
-import { loginShellPath, resolveRuntime, RuntimeMissingError, serverEnv } from './runtime.ts'
+import { desktopDshHome, loginShellPath, resolveRuntime, RuntimeMissingError, serverEnv } from './runtime.ts'
 import { serverLogFile, ServerStartError, startServer, type RunningServer } from './server.ts'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -160,7 +160,7 @@ function runAction(action: MenuAction): void {
       void shell.openPath(dirname(logFile()))
       return
     case 'open-dsh-home':
-      void shell.openPath(process.env.DSH_HOME ?? join(homedir(), '.dsh'))
+      void shell.openPath(desktopDshHome())
       return
     case 'restart-server':
       void (async () => {

@@ -116,9 +116,21 @@ export function resolveRuntime(packaged: boolean, resourcesPath: string, path: s
 }
 
 /**
+ * The desktop app's own dsh data directory. It is separate from the CLI's
+ * `~/.dsh` because the desktop runtime and a separately installed `dsh` can be
+ * different releases, and backends reject on-disk formats from other releases
+ * (settings, credentials, sessions). `ZHARNESS_DSH_HOME` overrides it.
+ * @returns the absolute data directory.
+ */
+export function desktopDshHome(): string {
+  return process.env.ZHARNESS_DSH_HOME ?? join(homedir(), '.zharness')
+}
+
+/**
  * Build the server's environment: the app environment with the login-shell PATH
- * and Homebrew locations merged in, `ELECTRON_RUN_AS_NODE` removed, and
- * `DSH_DESKTOP=1` so plugins can tell they run under the desktop shell.
+ * and Homebrew locations merged in, `ELECTRON_RUN_AS_NODE` removed,
+ * `DSH_HOME` set to {@link desktopDshHome}, and `DSH_DESKTOP=1` so plugins can
+ * tell they run under the desktop shell.
  * @param shellPath - login-shell PATH, when it could be read.
  * @returns the child environment.
  */
@@ -128,6 +140,7 @@ export function serverEnv(shellPath: string | undefined): NodeJS.ProcessEnv {
   delete env.ELECTRON_NO_ATTACH_CONSOLE
   env.PATH = mergePath(shellPath, process.env.PATH, '/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin')
   env.DSH_DESKTOP = '1'
+  env.DSH_HOME = desktopDshHome()
   env.HOME ??= homedir()
   // GUI processes on macOS start without a locale; dsh's shell tools and the
   // model see UTF-8 output only when LANG names one.

@@ -9,7 +9,8 @@ ZHarness is the macOS desktop app for DeepSeek Harness. It is an Electron shell 
 - **Supervised local server**: a start-up screen shows progress; when the server fails to start or exits unexpectedly, it shows the log tail with Retry and Open logs. Quitting sends SIGTERM, then SIGKILL after 5 seconds.
 - **Desktop layout**: translucent sidebar (macOS vibrancy) with an inset rounded content card, hidden-inset title bar, blue-violet accent, light and dark themes.
 - **Home screen**: a time-of-day greeting and quick-start task cards under the composer; without a workspace, a card first opens the workspace chooser and fills the task once one is selected.
-- **Native menu and shortcuts**: ⌘N new task, ⌘L focus composer, ⌘\ toggle sidebar, ⌘, settings; the Help menu restarts the local server and opens the log and `~/.dsh` directories.
+- **Native menu and shortcuts**: ⌘N new task, ⌘L focus composer, ⌘\ toggle sidebar, ⌘, settings; the Help menu restarts the local server and opens the log and data directories.
+- **Separate data directory**: desktop settings, API keys, and sessions live in `~/.zharness` (override with `ZHARNESS_DSH_HOME`), not the CLI's `~/.dsh`, because the two can be different releases and dsh rejects on-disk formats written by other releases.
 - **Environment**: reads PATH from the login shell (plus Homebrew paths) so the agent's shell tools find commands installed by `brew`, `nvm`, and similar; external links open in the default browser.
 
 ## Run in development
