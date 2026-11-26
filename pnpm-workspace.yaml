@@ -39,6 +39,10 @@ peerDependencyRules:
 # (git hooks) genuinely need theirs.
 allowBuilds:
   esbuild: true
+  # The desktop app (apps/desktop) downloads its Electron binary in postinstall.
+  electron: true
+  # Windows installer helper pulled in by electron-builder; not used for macOS builds.
+  electron-winstaller: false
   lefthook: true
   # Cross-platform boundary for the persistent PTY backend, including ConPTY on Windows.
   node-pty: true

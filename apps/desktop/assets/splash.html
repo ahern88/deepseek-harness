@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+<title>ZHarness</title>
+<style>
+  :root {
+    --bg: #f2f3f7;
+    --card: #ffffff;
+    --text: #1d2129;
+    --muted: #6b7280;
+    --line: rgba(20, 30, 60, 0.08);
+    --accent-a: #4f7cff;
+    --accent-b: #8b5cf6;
+    --danger: #e5484d;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #17181c;
+      --card: #1f2026;
+      --text: #e8eaf0;
+      --muted: #9aa0ab;
+      --line: rgba(255, 255, 255, 0.08);
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font: 14px/1.6 -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    display: grid;
+    place-items: center;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .drag { position: fixed; inset: 0 0 auto 0; height: 44px; -webkit-app-region: drag; }
+  .box { width: min(560px, calc(100vw - 48px)); text-align: center; }
+  .logo {
+    width: 72px; height: 72px; margin: 0 auto 20px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, var(--accent-a), var(--accent-b));
+    display: grid; place-items: center;
+    color: #fff; font-size: 38px; font-weight: 700; letter-spacing: -1px;
+    box-shadow: 0 12px 32px rgba(79, 124, 255, 0.35);
+  }
+  h1 { font-size: 22px; font-weight: 600; margin: 0 0 6px; }
+  .message { color: var(--muted); margin: 0; }
+  .bar {
+    width: 180px; height: 4px; margin: 24px auto 0;
+    border-radius: 4px; background: var(--line); overflow: hidden;
+  }
+  .bar::after {
+    content: ""; display: block; width: 40%; height: 100%; border-radius: 4px;
+    background: linear-gradient(90deg, var(--accent-a), var(--accent-b));
+    animation: slide 1.2s ease-in-out infinite;
+  }
+  @keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
+  .error { display: none; text-align: left; margin-top: 24px; }
+  body[data-phase="error"] .bar { display: none; }
+  body[data-phase="error"] .error { display: block; }
+  body[data-phase="error"] .message { color: var(--danger); }
+  pre {
+    max-height: 240px; overflow: auto; margin: 0 0 16px;
+    padding: 12px; border-radius: 10px;
+    background: var(--card); border: 1px solid var(--line);
+    font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    white-space: pre-wrap; word-break: break-all;
+    -webkit-user-select: text; user-select: text;
+  }
+  pre:empty { display: none; }
+  .actions { display: flex; gap: 10px; justify-content: center; }
+  button {
+    font: inherit; padding: 8px 18px; border-radius: 10px; cursor: pointer;
+    border: 1px solid var(--line); background: var(--card); color: var(--text);
+  }
+  button.primary {
+    border: none; color: #fff;
+    background: linear-gradient(135deg, var(--accent-a), var(--accent-b));
+  }
+</style>
+</head>
+<body data-phase="starting">
+  <div class="drag"></div>
+  <main class="box">
+    <div class="logo">Z</div>
+    <h1>ZHarness</h1>
+    <p class="message" id="message">正在启动本地智能体服务…</p>
+    <div class="bar"></div>
+    <section class="error">
+      <pre id="detail"></pre>
+      <div class="actions">
+        <button type="button" id="logs">打开日志</button>
+        <button type="button" class="primary" id="retry">重试</button>
+      </div>
+    </section>
+  </main>
+<script>
+  const bridge = window.zhDesktop
+  function render(status) {
+    document.body.dataset.phase = status.phase
+    document.getElementById('message').textContent = status.message
+    document.getElementById('detail').textContent = status.phase === 'error'
+      ? [status.detail, status.logFile ? '日志：' + status.logFile : ''].filter(Boolean).join('\n\n')
+      : ''
+    const pre = document.getElementById('detail')
+    pre.scrollTop = pre.scrollHeight
+  }
+  if (bridge) {
+    bridge.onStatus(render)
+    bridge.getStatus().then(render)
+    document.getElementById('retry').addEventListener('click', () => bridge.retry())
+    document.getElementById('logs').addEventListener('click', () => bridge.openLogs())
+  }
+</script>
+</body>
+</html>
